@@ -48,10 +48,10 @@ using google::scp::core::SuccessExecutionResult;
 using google::scp::core::common::kZeroUuid;
 using google::scp::core::errors::GetPublicErrorCode;
 using google::scp::core::utils::ConvertToPublicExecutionResult;
+using google::scp::cpio::MetricClientInterface;
 using google::scp::cpio::client_providers::GlobalCpio;
 using google::scp::cpio::client_providers::InstanceClientProviderInterface;
 using google::scp::cpio::client_providers::MetricClientProviderFactory;
-using google::scp::cpio::client_providers::MetricClientProviderInterface;
 using google::scp::cpio::client_providers::MetricClientUtils;
 using std::bind;
 using std::make_shared;
@@ -117,11 +117,8 @@ ExecutionResult MetricClient::Stop() noexcept {
 }
 
 core::ExecutionResult MetricClient::PutMetrics(
-    PutMetricsRequest request, Callback<PutMetricsResponse> callback) noexcept {
-  return Execute<PutMetricsRequest, PutMetricsResponse>(
-      bind(&MetricClientProviderInterface::PutMetrics, metric_client_provider_,
-           _1),
-      request, callback);
+    AsyncContext<PutMetricsRequest, PutMetricsResponse> context) noexcept {
+  return metric_client_provider_->PutMetrics(move(context));
 }
 
 std::unique_ptr<MetricClientInterface> MetricClientFactory::Create(

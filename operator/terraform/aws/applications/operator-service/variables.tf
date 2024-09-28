@@ -56,7 +56,7 @@ variable "ami_owners" {
 
 variable "change_handler_lambda" {
   description = <<-EOT
-        Change handler lambda path. If not provided defaults to locally built jar file. 
+        Change handler lambda path. If not provided defaults to locally built jar file.
         Build with `bazel build //operator/terraform/aws/applications/operator-service:all`.
       EOT
   type        = string
@@ -64,7 +64,7 @@ variable "change_handler_lambda" {
 
 variable "frontend_lambda" {
   description = <<-EOT
-        Frontend lambda path. If not provided defaults to locally built jar file. 
+        Frontend lambda path. If not provided defaults to locally built jar file.
         Build with `bazel build //operator/terraform/aws/applications/operator-service:all`.
       EOT
   type        = string
@@ -72,7 +72,7 @@ variable "frontend_lambda" {
 
 variable "sqs_write_failure_cleanup_lambda" {
   description = <<-EOT
-        SQS write failure cleanup lambda path. If not provided defaults to locally built jar file. 
+        SQS write failure cleanup lambda path. If not provided defaults to locally built jar file.
         Build with `bazel build //operator/terraform/aws/applications/operator-service:all`.
       EOT
   type        = string
@@ -103,6 +103,10 @@ variable "kms_key_parameter" {
   type        = string
 }
 
+################################################################################
+# Autoscaling Variables
+################################################################################
+
 variable "initial_capacity_ec2_instances" {
   description = "Autoscaling initial capacity."
   type        = number
@@ -132,6 +136,48 @@ variable "terminated_instance_handler_lambda" {
         jar file. Build with `bazel build /operator/terraform/aws/applications/operator-service:all`.
       EOT
   type        = string
+}
+
+variable "termination_hook_heartbeat_timeout_sec" {
+  type        = number
+  description = <<-EOT
+        Autoscaling termination lifecycle hook heartbeat timeout in seconds.
+        If using termination hook timeout extension, this value is recommended
+        to be greater than 10 minutes to allow heartbeats to occur. The max
+        value for heartbeat is 7200 (2 hours) as per AWS documentation.
+    EOT
+}
+
+variable "termination_hook_timeout_extension_enabled" {
+  type        = bool
+  description = <<-EOT
+        Enable sending heartbeats to extend timeout for worker autoscaling
+        termination lifecycle hook action. Required if the user wants to
+        be able to wait over 2 hours for jobs to complete before instance
+        termination.
+     EOT
+}
+
+variable "termination_hook_heartbeat_frequency_sec" {
+  type        = number
+  description = <<-EOT
+        Autoscaling termination lifecycle hook heartbeat frequency in seconds.
+        If using termination hook timeout extension, this value is recommended
+        to be greater than 10 minutes to allow heartbeats to occur to avoid
+        Autoscaling API throttling. The value should be less than
+        termination_hook_heartbeat_timeout_sec to allow heartbeats to happen
+        before the heartbeat timeout.
+    EOT
+}
+
+variable "termination_hook_max_timeout_extension_sec" {
+  type        = number
+  description = <<-EOT
+        Max time to heartbeat the autoscaling termination lifecycle hook in
+        seconds. The exact timeout could exceed this value since heartbeats
+        increase the timeout by a fixed amount of time. Used if
+        termination_hook_timeout_extension_enabled is true."
+      EOT
 }
 
 ################################################################################
@@ -358,4 +404,13 @@ variable "vpc_cidr" {
 variable "vpc_availability_zones" {
   description = "Specify the letter identifiers of which availability zones to deploy resources, such as a, b or c."
   type        = set(string)
+}
+
+################################################################################
+# Notifications Variables.
+################################################################################
+
+variable "enable_job_completion_notifications" {
+  description = "Determines if the SNS topic should be created for job completion notifications."
+  type        = bool
 }

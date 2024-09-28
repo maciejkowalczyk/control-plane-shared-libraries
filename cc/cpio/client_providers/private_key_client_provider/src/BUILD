@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//cc:scp_internal_pkg"])
 
 cc_library(
@@ -34,6 +36,7 @@ cc_library(
         "//cc/cpio/client_providers/role_credentials_provider/src:role_credentials_provider_select_lib",
         "//cc/public/cpio/interface/private_key_client:type_def",
         "//cc/public/cpio/proto/private_key_service/v1:private_key_service_cc_proto",
-        "@com_google_protobuf//:protobuf",
+        "@com_google_absl//absl/strings",
+        "@tink_cc//:json_keyset_reader",
     ],
 )

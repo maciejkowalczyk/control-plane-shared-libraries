@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = ["//visibility:public"])
 
 java_library(
@@ -22,9 +24,13 @@ java_library(
         "//java/com/google/scp/operator/cpio/lifecycleclient",
         "//java/com/google/scp/operator/cpio/metricclient",
         "//java/com/google/scp/operator/cpio/metricclient:model",
+        "//java/com/google/scp/operator/cpio/notificationclient",
+        "//java/com/google/scp/operator/cpio/notificationclient:model",
         "//java/com/google/scp/operator/shared/dao/jobqueue/common",
         "//java/com/google/scp/operator/shared/dao/metadatadb/common",
         "//java/com/google/scp/operator/shared/model",
+        "//java/com/google/scp/shared/clients/configclient",
+        "//java/com/google/scp/shared/clients/configclient:model",
         "//java/com/google/scp/shared/proto",
         "//java/external:findbugs",
         "//java/external:guava",
@@ -64,6 +70,8 @@ java_library(
         "//java/com/google/scp/operator/cpio/lifecycleclient",
         "//java/com/google/scp/operator/cpio/metricclient",
         "//java/com/google/scp/operator/cpio/metricclient:model",
+        "//java/com/google/scp/operator/cpio/notificationclient",
+        "//java/com/google/scp/operator/cpio/notificationclient:model",
         "//java/com/google/scp/operator/shared/dao/jobqueue/aws",
         "//java/com/google/scp/operator/shared/dao/jobqueue/common",
         "//java/com/google/scp/operator/shared/dao/metadatadb/aws",

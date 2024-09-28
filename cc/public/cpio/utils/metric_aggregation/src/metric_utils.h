@@ -20,52 +20,49 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include <google/protobuf/map.h>
 #include <google/protobuf/util/time_util.h>
 
+#include "core/interface/async_executor_interface.h"
 #include "cpio/client_providers/metric_client_provider/src/metric_client_utils.h"
 #include "public/core/interface/execution_result.h"
 #include "public/cpio/proto/metric_service/v1/metric_service.pb.h"
+#include "public/cpio/utils/metric_aggregation/interface/aggregate_metric_interface.h"
 #include "public/cpio/utils/metric_aggregation/interface/type_def.h"
+#include "public/cpio/utils/metric_aggregation/src/aggregate_metric.h"
+#include "public/cpio/utils/metric_aggregation/src/simple_metric.h"
 
 namespace google::scp::cpio {
 class MetricUtils {
  public:
+  /**
+   * @brief Get the PutMetricsRequest protobuf object.
+   *
+   * @param[out] record_metric_request
+   * @param metric_info The metric definition including name, unit, and labels.
+   * @param metric_value The value of the metric.
+   */
   static void GetPutMetricsRequest(
       std::shared_ptr<cmrt::sdk::metric_service::v1::PutMetricsRequest>&
           record_metric_request,
-      const std::shared_ptr<MetricDefinition>& metric_info,
-      const std::shared_ptr<MetricValue>& metric_value,
-      const std::shared_ptr<MetricTag>& metric_tag = nullptr) noexcept {
-    auto metric = record_metric_request->add_metrics();
-    metric->set_value(*metric_value);
-    auto final_name = (metric_tag && metric_tag->update_name)
-                          ? *metric_tag->update_name
-                          : *metric_info->name;
-    metric->set_name(final_name);
-    auto final_unit = (metric_tag && metric_tag->update_unit)
-                          ? *metric_tag->update_unit
-                          : *metric_info->unit;
-    metric->set_unit(
-        client_providers::MetricClientUtils::ConvertToMetricUnitProto(
-            final_unit));
+      const MetricDefinition& metric_info,
+      const MetricValue& metric_value) noexcept;
 
-    // Adds the labels from metric_info and additional_labels.
-    auto labels = metric->mutable_labels();
-    if (metric_info->labels) {
-      for (const auto& label : *metric_info->labels) {
-        labels->insert(protobuf::MapPair(label.first, label.second));
-      }
-    }
-    if (metric_tag && metric_tag->additional_labels) {
-      for (const auto& label : *metric_tag->additional_labels) {
-        labels->insert(protobuf::MapPair(label.first, label.second));
-      }
-    }
-    *metric->mutable_timestamp() = protobuf::util::TimeUtil::GetCurrentTime();
-  }
+  /**
+   * @brief Create a Metric Labels With Component Signature object
+   *
+   * @param component_name the component name value for metric label
+   * `ComponentName`.
+   * @param method_name the method name value for metric label `MethodName`.
+   * @return MetricLabels a map of metric labels.
+   */
+  static MetricLabels CreateMetricLabelsWithComponentSignature(
+      std::string component_name,
+      std::string method_name = std::string()) noexcept;
 };
 
 }  // namespace google::scp::cpio

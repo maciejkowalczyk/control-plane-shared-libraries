@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//cc:scp_internal_pkg"])
 
 cc_library(
@@ -36,16 +38,16 @@ cc_library(
 )
 
 exports_files([
-    "aws_s3_client_provider.h",
-    "aws_s3_client_provider.cc",
-    "aws_s3_utils.h",
+    "aws_blob_storage_client_provider.h",
+    "aws_blob_storage_client_provider.cc",
+    "aws_blob_storage_client_utils.h",
 ])
 
 filegroup(
     name = "aws_blob_storage_client_provider_srcs",
     srcs = [
-        ":aws_s3_client_provider.cc",
-        ":aws_s3_client_provider.h",
-        ":aws_s3_utils.h",
+        ":aws_blob_storage_client_provider.cc",
+        ":aws_blob_storage_client_provider.h",
+        ":aws_blob_storage_client_utils.h",
     ],
 )

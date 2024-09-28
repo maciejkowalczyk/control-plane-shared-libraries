@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "auth_token_provider_select_lib",
-    srcs = select(
-        {
-            "//cc/public/cpio/interface:aws_cpio_lib": ["//cc/cpio/client_providers/auth_token_provider/src/aws:aws_auth_token_provider_srcs"],
-            "//cc/public/cpio/interface:gcp_cpio_lib": ["//cc/cpio/client_providers/auth_token_provider/src/gcp:gcp_auth_token_provider_srcs"],
-        },
-        no_match_error = "Please build for AWS or GCP",
-    ),
     deps = select(
         {
             "//cc/public/cpio/interface:aws_cpio_lib": [

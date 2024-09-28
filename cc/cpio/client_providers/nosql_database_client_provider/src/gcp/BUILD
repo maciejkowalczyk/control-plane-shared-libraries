@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
@@ -34,5 +36,20 @@ cc_library(
         "@com_github_googleapis_google_cloud_cpp//:spanner",
         "@com_google_absl//absl/strings",
         "@nlohmann_json//:lib",
+    ],
+)
+
+exports_files([
+    "gcp_nosql_database_client_provider.h",
+    "gcp_nosql_database_client_provider.cc",
+    "gcp_nosql_database_client_utils.h",
+])
+
+filegroup(
+    name = "gcp_nosql_database_client_provider_srcs",
+    srcs = [
+        ":gcp_nosql_database_client_provider.cc",
+        ":gcp_nosql_database_client_provider.h",
+        ":gcp_nosql_database_client_utils.h",
     ],
 )

@@ -17,15 +17,16 @@
 #pragma once
 
 #include <atomic>
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "core/interface/async_context.h"
 #include "core/interface/async_executor_interface.h"
 #include "cpio/client_providers/interface/metric_client_provider_interface.h"
 #include "public/core/interface/execution_result.h"
+#include "public/cpio/interface/metric_client/metric_client_interface.h"
 #include "public/cpio/proto/metric_service/v1/metric_service.pb.h"
 #include "public/cpio/utils/metric_aggregation/interface/aggregate_metric_interface.h"
 #include "public/cpio/utils/metric_aggregation/interface/type_def.h"
@@ -37,14 +38,16 @@ namespace google::scp::cpio {
  */
 class AggregateMetric : public AggregateMetricInterface {
  public:
+  explicit AggregateMetric(core::AsyncExecutorInterface* async_executor,
+                           MetricClientInterface* metric_client,
+                           MetricDefinition metric_info,
+                           core::TimeDuration push_interval_duration_in_ms);
+
   explicit AggregateMetric(
-      const std::shared_ptr<core::AsyncExecutorInterface>& async_executor,
-      const std::shared_ptr<client_providers::MetricClientProviderInterface>&
-          metric_client,
-      const std::shared_ptr<MetricDefinition>& metric_info,
-      core::TimeDuration time_duration = 60000,
-      const std::shared_ptr<std::vector<std::string>>& event_code_list =
-          nullptr,
+      core::AsyncExecutorInterface* async_executor,
+      MetricClientInterface* metric_client, MetricDefinition metric_info,
+      core::TimeDuration push_interval_duration_in_ms,
+      const std::vector<std::string>& event_code_labels_list,
       const std::string& event_code_label_key = kEventCodeLabelKey);
 
   core::ExecutionResult Init() noexcept override;
@@ -56,17 +59,20 @@ class AggregateMetric : public AggregateMetricInterface {
   core::ExecutionResult Increment(
       const std::string& event_code = std::string()) noexcept override;
 
+  core::ExecutionResult IncrementBy(
+      uint64_t value,
+      const std::string& event_code = std::string()) noexcept override;
+
  protected:
   /**
    * @brief Runs the actual metric push logic for one counter data.
    *
    * @param counter the counter number to be the metric value.
-   * @param metric_tag Optional metric_tag contains the metric name, unit or tag
-   * to update the info from metric_info_.
+   * @param metric_info Metric info specifies the metric's name, unit,
+   * namespace, and labels.
    */
-  virtual void MetricPushHandler(
-      int64_t counter,
-      const std::shared_ptr<MetricTag>& metric_tag = nullptr) noexcept;
+  virtual void MetricPushHandler(int64_t counter,
+                                 const MetricDefinition& metric_info) noexcept;
 
   /**
    * @brief Goes over all counters and push metric when the counter has valid
@@ -83,39 +89,45 @@ class AggregateMetric : public AggregateMetricInterface {
    */
   virtual core::ExecutionResult ScheduleMetricPush() noexcept;
 
-  /// The map contains the event codes paired with its counter. The
+  /// The unordered_map contains the event codes paired with its counter. The
   /// event_counter is associated with the event_code.
-  std::map<std::string, std::atomic<size_t>> event_counters_;
+  std::unordered_map<std::string, std::atomic<size_t>> event_counters_;
 
-  /// The map contains the event codes paired with its metric tag. The metric
-  /// tag has one metric label of event_code.
-  std::map<std::string, std::shared_ptr<MetricTag>> event_tags_;
+  /// The unordered_map contains the event codes paired with its metric
+  /// definition.
+  std::unordered_map<std::string, const MetricDefinition> event_metric_infos_;
 
   /// An instance to the async executor.
-  std::shared_ptr<core::AsyncExecutorInterface> async_executor_;
+  core::AsyncExecutorInterface* async_executor_;
   /// Metric client instance.
-  std::shared_ptr<client_providers::MetricClientProviderInterface>
-      metric_client_;
+  MetricClientInterface* metric_client_;
   /// Metric general information.
-  std::shared_ptr<MetricDefinition> metric_info_;
+  const MetricDefinition metric_info_;
 
-  /// The time duration of the aggregated metric in milliseconds. The default
-  /// value is 60000.
-  core::TimeDuration time_duration_;
+  /// The time duration of the aggregated metric push interval in milliseconds.
+  core::TimeDuration push_interval_duration_in_ms_;
 
   /// The default counter in AggregateMetric. This counter doesn't have
   /// event_code or metric_tag, and it defined by metric_info_ only. When
-  /// construct AggregateMetric without event_code_list, this is the only
+  /// construct AggregateMetric without event_code_labels_list, this is the only
   /// default counter in AggregateMetric.
   std::atomic<size_t> counter_;
 
   /// The cancellation callback.
   std::function<bool()> current_cancellation_callback_;
-  /// Sync mutex
-  std::mutex sync_mutex_;
-  /// Indicates whther the component stopped
-  bool is_running_;
+
+  /// Indicates whether the component stopped
+  std::atomic<bool> is_running_;
+
+  /// Indicates whether the component can take metric increments
+  std::atomic<bool> can_accept_incoming_increments_;
 
   static constexpr char kEventCodeLabelKey[] = "EventCode";
+
+  /// @brief activity ID for the lifetime of the object
+  const core::common::Uuid object_activity_id_;
+
+  /// @brief mutex to protect scheduling new tasks while stopping the component
+  std::mutex task_schedule_mutex_;
 };
 }  // namespace google::scp::cpio

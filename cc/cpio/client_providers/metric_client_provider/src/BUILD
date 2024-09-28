@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//cc:scp_internal_pkg"])
 
 cc_library(
     name = "metric_client_provider_select_lib",
-    srcs = select(
-        {
-            "//cc/public/cpio/interface:aws_cpio_lib": ["//cc/cpio/client_providers/metric_client_provider/src/aws:aws_metric_client_provider_srcs"],
-            "//cc/public/cpio/interface:gcp_cpio_lib": ["//cc/cpio/client_providers/metric_client_provider/src/gcp:gcp_metric_client_provider_srcs"],
-        },
-        no_match_error = "Please build for AWS or GCP",
-    ),
     deps = select(
         {
             "//cc/public/cpio/interface:aws_cpio_lib": [
@@ -52,6 +47,7 @@ cc_library(
         "//cc/cpio/client_providers/interface:type_def",
         "//cc/public/core/interface:execution_result",
         "//cc/public/cpio/interface:cpio_errors",
+        "//cc/public/cpio/interface/metric_client:metric_client_interface",
         "//cc/public/cpio/interface/metric_client:type_def",
         "//cc/public/cpio/proto/metric_service/v1:metric_service_cc_proto",
         "//cc/public/cpio/utils/metric_aggregation/interface:type_def",

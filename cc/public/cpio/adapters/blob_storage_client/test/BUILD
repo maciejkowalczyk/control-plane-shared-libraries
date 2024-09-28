@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
 package(default_visibility = ["//cc:scp_internal_pkg"])
 
 exports_files(["test_aws_blob_storage_client.h"])
@@ -20,6 +22,15 @@ filegroup(
     name = "test_aws_blob_storage_client_srcs",
     srcs = [
         ":test_aws_blob_storage_client.h",
+    ],
+)
+
+exports_files(["test_gcp_blob_storage_client.h"])
+
+filegroup(
+    name = "test_gcp_blob_storage_client_srcs",
+    srcs = [
+        ":test_gcp_blob_storage_client.h",
     ],
 )
 

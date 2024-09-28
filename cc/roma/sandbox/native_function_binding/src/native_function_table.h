@@ -19,10 +19,12 @@
 #include <functional>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 
+#include "absl/container/flat_hash_map.h"
 #include "cc/roma/interface/function_binding_io.pb.h"
 #include "public/core/interface/execution_result.h"
+
+#include "error_codes.h"
 
 namespace google::scp::roma::sandbox::native_function_binding {
 typedef std::function<void(
@@ -53,7 +55,7 @@ class NativeFunctionTable {
       proto::FunctionBindingIoProto& function_binding_proto);
 
  private:
-  std::unordered_map<std::string, NativeBinding> native_functions_;
+  absl::flat_hash_map<std::string, NativeBinding> native_functions_;
   std::mutex native_functions_map_mutex_;
 };
 }  // namespace google::scp::roma::sandbox::native_function_binding

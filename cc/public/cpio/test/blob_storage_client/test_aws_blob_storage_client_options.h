@@ -21,12 +21,12 @@
 #include <string>
 
 #include "public/cpio/interface/blob_storage_client/type_def.h"
-#include "public/cpio/test/blob_storage_client/test_aws_blob_storage_client_options.h"
 
 namespace google::scp::cpio {
 /// BlobStorageClientOptions for testing on AWS.
 struct TestAwsBlobStorageClientOptions : public BlobStorageClientOptions {
-  std::shared_ptr<std::string> s3_endpoint_override;
+  std::shared_ptr<std::string> s3_endpoint_override =
+      std::make_shared<std::string>();
 };
 }  // namespace google::scp::cpio
 

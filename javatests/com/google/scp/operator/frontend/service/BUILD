@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
 package(default_visibility = ["//visibility:public"])
 
 java_test(
@@ -19,6 +21,7 @@ java_test(
     srcs = ["FrontendServiceImplTest.java"],
     deps = [
         ":service",
+        "//cc/public/cpio/proto/job_service/v1:job_service_java_proto",
         "//java/com/google/scp/operator/frontend/injection/modules/testing:fake_frontend_module",
         "//java/com/google/scp/operator/frontend/service",
         "//java/com/google/scp/operator/frontend/service/converter",
@@ -26,7 +29,10 @@ java_test(
         "//java/com/google/scp/operator/frontend/tasks",
         "//java/com/google/scp/operator/frontend/tasks/validation",
         "//java/com/google/scp/operator/frontend/testing:fake_request_info_validator",
+        "//java/com/google/scp/operator/shared/dao/jobqueue/common",
+        "//java/com/google/scp/operator/shared/dao/jobqueue/testing",
         "//java/com/google/scp/operator/shared/dao/metadatadb/common",
+        "//java/com/google/scp/operator/shared/dao/metadatadb/testing:fake_job_db",
         "//java/com/google/scp/operator/shared/dao/metadatadb/testing:fake_metadata_db",
         "//java/com/google/scp/operator/shared/dao/metadatadb/testing:job_generator",
         "//java/com/google/scp/operator/shared/injection/modules:aws_clients_module",
@@ -53,8 +59,10 @@ java_library(
     name = "service",
     srcs = ["ServiceJobGenerator.java"],
     deps = [
+        "//cc/public/cpio/proto/job_service/v1:job_service_java_proto",
         "//java/com/google/scp/operator/frontend/service/model",
         "//java/com/google/scp/operator/shared/model",
+        "//java/com/google/scp/shared/proto",
         "//java/external:acai",
         "//java/external:google_truth",
         "//java/external:google_truth8",

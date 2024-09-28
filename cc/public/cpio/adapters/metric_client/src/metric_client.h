@@ -38,13 +38,13 @@ class MetricClient : public MetricClientInterface {
   core::ExecutionResult Stop() noexcept override;
 
   core::ExecutionResult PutMetrics(
-      google::cmrt::sdk::metric_service::v1::PutMetricsRequest request,
-      Callback<google::cmrt::sdk::metric_service::v1::PutMetricsResponse>
-          callback) noexcept override;
+      core::AsyncContext<
+          google::cmrt::sdk::metric_service::v1::PutMetricsRequest,
+          google::cmrt::sdk::metric_service::v1::PutMetricsResponse>
+          context) noexcept override;
 
  protected:
-  std::shared_ptr<client_providers::MetricClientProviderInterface>
-      metric_client_provider_;
+  std::shared_ptr<MetricClientInterface> metric_client_provider_;
 
  private:
   virtual core::ExecutionResult CreateMetricClientProvider() noexcept;

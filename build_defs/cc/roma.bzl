@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//build_defs/cc:google_benchmark.bzl", "google_benchmark")
 load("//build_defs/cc:v8.bzl", "import_v8")
 load("//build_defs/cc/shared:sandboxed_api.bzl", "sandboxed_api")
 
 def roma_dependencies(scp_repo_name = ""):
     import_v8(scp_repo_name)
     sandboxed_api(scp_repo_name)
+    google_benchmark()

@@ -48,6 +48,16 @@ enum class AsyncPriority {
   Urgent = 2,
 };
 
+/// @brief Callbacks originating from the providers should have a higher
+/// priority than the regular tasks because they are time-sensitive.
+static constexpr AsyncPriority kDefaultAsyncPriorityForCallbackExecution =
+    AsyncPriority::High;
+
+/// @brief Blocking tasks are scheduled with a normal priority are can be
+/// starved by a higher/urgent priority tasks.
+static constexpr AsyncPriority kDefaultAsyncPriorityForBlockingIOTaskExecution =
+    AsyncPriority::Normal;
+
 /// The setting with which affinity should be enforced.
 enum class AsyncExecutorAffinitySetting {
   /**
@@ -85,6 +95,8 @@ enum class AsyncExecutorAffinitySetting {
    */
   AffinitizedToCallingAsyncExecutor = 1,
 };
+
+using TaskCancellationLambda = std::function<bool()>;
 
 /**
  * @brief AsyncExecutor is the main thread-pool of the service. It controls the
@@ -145,7 +157,7 @@ class AsyncExecutorInterface : public ServiceInterface {
    */
   virtual ExecutionResult ScheduleFor(
       const AsyncOperation& work, Timestamp timestamp,
-      std::function<bool()>& cancellation_callback) noexcept = 0;
+      TaskCancellationLambda& cancellation_callback) noexcept = 0;
 
   /**
    * @brief Same as above but with the given affinity setting.
@@ -153,7 +165,7 @@ class AsyncExecutorInterface : public ServiceInterface {
    */
   virtual ExecutionResult ScheduleFor(
       const AsyncOperation& work, Timestamp timestamp,
-      std::function<bool()>& cancellation_callback,
+      TaskCancellationLambda& cancellation_callback,
       AsyncExecutorAffinitySetting affinity) noexcept = 0;
 };
 }  // namespace google::scp::core

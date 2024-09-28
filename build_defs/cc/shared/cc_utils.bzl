@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def cc_utils():
@@ -29,10 +29,9 @@ def cc_utils():
     maybe(
         git_repository,
         name = "oneTBB",
-        # Commits on Apr 18, 2022
-        commit = "9d2a3477ce276d437bf34b1582781e5b11f9b37a",
+        # Commits on Apr 6, 2023, v2021.9.0
+        commit = "a00cc3b8b5fb4d8115e9de56bf713157073ed68c",
         remote = "https://github.com/oneapi-src/oneTBB.git",
-        shallow_since = "1648820995 +0300",
     )
 
     maybe(

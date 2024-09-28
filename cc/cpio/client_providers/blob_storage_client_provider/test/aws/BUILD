@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_test(
-    name = "aws_s3_test",
+    name = "aws_blob_storage_client_provider_test",
     size = "small",
     srcs = [
-        "aws_s3_client_provider_test.cc",
-        "aws_s3_utils_test.cc",
+        "aws_blob_storage_client_provider_stream_test.cc",
+        "aws_blob_storage_client_provider_test.cc",
+        "aws_blob_storage_client_utils_test.cc",
         "mock_s3_client.h",
     ],
     copts = [

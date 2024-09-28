@@ -113,6 +113,14 @@ module "kms_key_parameter" {
   parameter_value       = var.kms_key_parameter
 }
 
+module "notifications_topic_arn" {
+  count           = var.enable_job_completion_notifications ? 1 : 0
+  source          = "../../modules/parameters"
+  environment     = var.environment
+  parameter_name  = "NOTIFICATIONS_TOPIC_ID"
+  parameter_value = module.notifications[0].notifications_sns_topic_arn
+}
+
 module "frontend" {
   source                               = "../../modules/frontend"
   environment                          = var.environment
@@ -222,6 +230,11 @@ module "worker_autoscaling" {
   min_ec2_instances              = var.min_capacity_ec2_instances
   max_ec2_instances              = var.max_capacity_ec2_instances
 
+  termination_hook_heartbeat_timeout_sec     = var.termination_hook_heartbeat_timeout_sec
+  termination_hook_timeout_extension_enabled = var.termination_hook_timeout_extension_enabled
+  termination_hook_heartbeat_frequency_sec   = var.termination_hook_heartbeat_frequency_sec
+  termination_hook_max_timeout_extension_sec = var.termination_hook_max_timeout_extension_sec
+
   jobqueue_sqs_url = module.job_queue.jobqueue_sqs_url
   jobqueue_sqs_arn = module.job_queue.jobqueue_sqs_arn
 
@@ -262,8 +275,9 @@ module "frontend_dashboard" {
 module "worker_dashboard" {
   source = "../../modules/workerdashboard"
 
-  environment = var.environment
-  region      = var.region
+  environment                   = var.environment
+  region                        = var.region
+  custom_metrics_alarms_enabled = true
 }
 
 module "vpc" {
@@ -280,4 +294,11 @@ module "vpc" {
   dynamodb_arns                   = [module.metadata_db.metadata_db_arn, module.asginstances_db.asginstances_db_arn]
 
   s3_allowed_principal_arns = [module.worker_service.worker_enclave_role_arn]
+}
+
+module "notifications" {
+  count  = var.enable_job_completion_notifications ? 1 : 0
+  source = "../../modules/notifications"
+
+  environment = var.environment
 }

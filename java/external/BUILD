@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -58,7 +60,7 @@ java_library(
         ":autoservice_plugin",
     ],
     neverlink = True,
-    exports = [":autoservice_plugin"],
+    exports = [":autoservice_annotations"],
 )
 
 alias(
@@ -181,7 +183,7 @@ java_library(
         ":autovalue_plugin",
     ],
     neverlink = True,
-    exports = [":autovalue_plugin"],
+    exports = [":autovalue_annotations"],
 )
 
 alias(
@@ -283,6 +285,11 @@ alias(
 alias(
     name = "aws_s3",
     actual = "@maven//:software_amazon_awssdk_s3",
+)
+
+alias(
+    name = "aws_sns",
+    actual = "@maven//:software_amazon_awssdk_sns",
 )
 
 alias(

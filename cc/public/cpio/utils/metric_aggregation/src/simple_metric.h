@@ -17,11 +17,13 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 #include "core/interface/async_context.h"
 #include "core/interface/async_executor_interface.h"
 #include "cpio/client_providers/interface/metric_client_provider_interface.h"
 #include "public/core/interface/execution_result.h"
+#include "public/cpio/interface/metric_client/metric_client_interface.h"
 #include "public/cpio/proto/metric_service/v1/metric_service.pb.h"
 #include "public/cpio/utils/metric_aggregation/interface/simple_metric_interface.h"
 #include "public/cpio/utils/metric_aggregation/interface/type_def.h"
@@ -31,14 +33,12 @@ namespace google::scp::cpio {
  */
 class SimpleMetric : public SimpleMetricInterface {
  public:
-  explicit SimpleMetric(
-      const std::shared_ptr<core::AsyncExecutorInterface>& async_executor,
-      const std::shared_ptr<client_providers::MetricClientProviderInterface>&
-          metric_client,
-      const std::shared_ptr<MetricDefinition>& metric_info)
+  explicit SimpleMetric(core::AsyncExecutorInterface* async_executor,
+                        MetricClientInterface* metric_client,
+                        MetricDefinition metric_info)
       : async_executor_(async_executor),
         metric_client_(metric_client),
-        metric_info_(metric_info) {}
+        metric_info_(std::move(metric_info)) {}
 
   core::ExecutionResult Init() noexcept override;
 
@@ -46,8 +46,9 @@ class SimpleMetric : public SimpleMetricInterface {
 
   core::ExecutionResult Stop() noexcept override;
 
-  void Push(const std::shared_ptr<MetricValue>& metric_value,
-            const std::shared_ptr<MetricTag>& metric_tag) noexcept override;
+  void Push(const MetricValue& metric_value,
+            std::optional<std::reference_wrapper<const MetricDefinition>>
+                metric_info = std::nullopt) noexcept override;
 
  protected:
   /**
@@ -59,14 +60,16 @@ class SimpleMetric : public SimpleMetricInterface {
   virtual void RunMetricPush(
       const std::shared_ptr<cmrt::sdk::metric_service::v1::PutMetricsRequest>
           record_metric_request) noexcept;
-
+  /// The cancellation task callback.
+  std::function<bool()> current_task_cancellation_callback_;
   /// An instance to the async executor.
-  std::shared_ptr<core::AsyncExecutorInterface> async_executor_;
+  core::AsyncExecutorInterface* async_executor_;
   /// Metric client instance.
-  std::shared_ptr<client_providers::MetricClientProviderInterface>
-      metric_client_;
+  MetricClientInterface* metric_client_;
   /// Metric general information.
-  std::shared_ptr<MetricDefinition> metric_info_;
+  const MetricDefinition metric_info_;
+  /// Acitivity ID of the object
+  const core::common::Uuid object_activity_id_;
 };
 
 }  // namespace google::scp::cpio

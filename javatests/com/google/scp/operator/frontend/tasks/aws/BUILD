@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_test")
+
 java_test(
     name = "AwsCreateJobTaskTest",
     srcs = ["AwsCreateJobTaskTest.java"],
@@ -20,6 +22,7 @@ java_test(
         "//java/com/google/scp/operator/frontend/service",
         "//java/com/google/scp/operator/frontend/tasks",
         "//java/com/google/scp/operator/frontend/tasks/aws",
+        "//java/com/google/scp/operator/frontend/tasks/testing",
         "//java/com/google/scp/operator/frontend/testing:fake_request_info_validator",
         "//java/com/google/scp/operator/shared/dao/metadatadb/common",
         "//java/com/google/scp/operator/shared/dao/metadatadb/testing:fake_metadata_db",

@@ -22,6 +22,8 @@
 #include <mutex>
 #include <utility>
 
+#include "absl/strings/str_join.h"
+#include "core/common/time_provider/src/time_provider.h"
 #include "core/interface/async_context.h"
 #include "core/interface/async_executor_interface.h"
 #include "public/core/interface/execution_result.h"
@@ -30,18 +32,22 @@
 
 #include "metric_utils.h"
 
+using google::cmrt::sdk::metric_service::v1::PutMetricsRequest;
+using google::cmrt::sdk::metric_service::v1::PutMetricsResponse;
 using google::scp::core::AsyncContext;
 using google::scp::core::AsyncPriority;
 using google::scp::core::ExecutionResult;
 using google::scp::core::SuccessExecutionResult;
 using google::scp::core::Timestamp;
-// using google::scp::cpio::MetricValue;
-using google::cmrt::sdk::metric_service::v1::PutMetricsRequest;
-using google::cmrt::sdk::metric_service::v1::PutMetricsResponse;
-using google::scp::cpio::client_providers::MetricClientProviderInterface;
+using google::scp::core::common::TimeProvider;
+using google::scp::cpio::MetricClientInterface;
+using google::scp::cpio::MetricValue;
 using std::make_shared;
 using std::move;
 using std::shared_ptr;
+using std::string;
+
+static constexpr char kSimpleMetric[] = "SimpleMetric";
 
 namespace google::scp::cpio {
 ExecutionResult SimpleMetric::Init() noexcept {
@@ -53,6 +59,9 @@ ExecutionResult SimpleMetric::Run() noexcept {
 }
 
 ExecutionResult SimpleMetric::Stop() noexcept {
+  if (current_task_cancellation_callback_) {
+    current_task_cancellation_callback_();
+  }
   return SuccessExecutionResult();
 }
 
@@ -61,26 +70,55 @@ void SimpleMetric::RunMetricPush(
   auto activity_id = core::common::Uuid::GenerateUuid();
   AsyncContext<PutMetricsRequest, PutMetricsResponse> record_metric_context(
       move(record_metric_request),
-      [&](AsyncContext<PutMetricsRequest, PutMetricsResponse>& outcome) {
-        if (!outcome.result.Successful()) {
-          // TODO: Create an alert or reschedule
+      [&](AsyncContext<PutMetricsRequest, PutMetricsResponse>& context) {
+        if (!context.result.Successful()) {
+          std::vector<string> metric_names;
+          for (auto& metric : context.request->metrics()) {
+            metric_names.push_back(metric.name());
+          }
+          SCP_CRITICAL(kSimpleMetric, object_activity_id_, context.result,
+                       "PutMetrics returned a failure for '%llu' metrics. The ",
+                       "metrics are: '%s'", context.request->metrics().size(),
+                       absl::StrJoin(metric_names, ", ").c_str());
         }
       },
       activity_id, activity_id);
-  auto execution_result = metric_client_->PutMetrics(record_metric_context);
+  auto metrics_count = record_metric_context.request->metrics().size();
+  auto execution_result =
+      metric_client_->PutMetrics(move(record_metric_context));
   if (!execution_result.Successful()) {
-    // TODO: Create an alert or reschedule
+    SCP_CRITICAL(kSimpleMetric, object_activity_id_, execution_result,
+                 "PutMetrics returned a failure for '%llu' metrics",
+                 metrics_count);
   }
 }
 
-void SimpleMetric::Push(const shared_ptr<MetricValue>& metric_value,
-                        const shared_ptr<MetricTag>& metric_tag) noexcept {
+void SimpleMetric::Push(
+    const MetricValue& metric_value,
+    std::optional<std::reference_wrapper<const MetricDefinition>>
+        metric_info) noexcept {
   auto record_metric_request = make_shared<PutMetricsRequest>();
-  MetricUtils::GetPutMetricsRequest(record_metric_request, metric_info_,
-                                    metric_value, metric_tag);
-  async_executor_->Schedule(
+  // if metric_info was provided for Push(), the metric will be created using
+  // the provided metric_info. Otherwise, the metric will be created using the
+  // predefined metric_info_ that was set when the SimpleMetric object was
+  // created.
+  if (metric_info) {
+    MetricUtils::GetPutMetricsRequest(record_metric_request, metric_info->get(),
+                                      metric_value);
+  } else {
+    MetricUtils::GetPutMetricsRequest(record_metric_request, metric_info_,
+                                      metric_value);
+  }
+
+  auto execution_result = async_executor_->ScheduleFor(
       [this, record_metric_request]() { RunMetricPush(record_metric_request); },
-      AsyncPriority::Normal);
+      TimeProvider::GetSteadyTimestampInNanosecondsAsClockTicks(),
+      current_task_cancellation_callback_);
+  if (!execution_result.Successful()) {
+    SCP_CRITICAL(kSimpleMetric, object_activity_id_, execution_result,
+                 "Cannot schedule Metric Push for '%llu' metrics.",
+                 record_metric_request->metrics().size());
+  }
 }
 
 }  // namespace google::scp::cpio
